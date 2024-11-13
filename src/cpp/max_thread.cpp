@@ -3,33 +3,33 @@
 #include <thread>
 #include <chrono>
 #include <random>
-#include <numeric>
+#include <algorithm>
 #include <string>
+#include <limits>
 
-class SumThread {
+class MaxThread {
 private:
     const std::vector<int>& numbers;
     size_t start_index;
     size_t end_index;
-    long long partial_sum;
+    int partial_max;
 
 public:
-    SumThread(const std::vector<int>& nums, size_t start, size_t end)
-        : numbers(nums), start_index(start), end_index(end), partial_sum(0) {}
+    MaxThread(const std::vector<int>& nums, size_t start, size_t end)
+        : numbers(nums), start_index(start), end_index(end), partial_max(std::numeric_limits<int>::min()) {}
 
     void calculate() {
-        partial_sum = std::accumulate(numbers.begin() + start_index, 
-                                    numbers.begin() + end_index, 0LL);
+        partial_max = *std::max_element(numbers.begin() + start_index, numbers.begin() + end_index);
     }
 
-    long long getPartialSum() const { return partial_sum; }
+    int getPartialMax() const { return partial_max; }
 };
 
-std::pair<long long, double> parallel_sum(const std::vector<int>& numbers, int num_threads) {
+std::pair<int, double> parallel_max(const std::vector<int>& numbers, int num_threads) {
     auto start_time = std::chrono::high_resolution_clock::now();
     
     std::vector<std::thread> threads;
-    std::vector<SumThread> sum_threads;
+    std::vector<MaxThread> max_threads;
     
     size_t chunk_size = numbers.size() / num_threads;
     
@@ -38,8 +38,8 @@ std::pair<long long, double> parallel_sum(const std::vector<int>& numbers, int n
         size_t start_idx = i * chunk_size;
         size_t end_idx = (i == num_threads - 1) ? numbers.size() : (i + 1) * chunk_size;
         
-        sum_threads.emplace_back(numbers, start_idx, end_idx);
-        threads.emplace_back(&SumThread::calculate, &sum_threads.back());
+        max_threads.emplace_back(numbers, start_idx, end_idx);
+        threads.emplace_back(&MaxThread::calculate, &max_threads.back());
     }
     
     // Wait for all threads
@@ -47,16 +47,16 @@ std::pair<long long, double> parallel_sum(const std::vector<int>& numbers, int n
         thread.join();
     }
     
-    // Calculate total sum
-    long long total_sum = 0;
-    for (const auto& sum_thread : sum_threads) {
-        total_sum += sum_thread.getPartialSum();
+    // Calculate total max
+    int total_max = std::numeric_limits<int>::min();
+    for (const auto& max_thread : max_threads) {
+        total_max = std::max(total_max, max_thread.getPartialMax());
     }
     
     auto end_time = std::chrono::high_resolution_clock::now();
     double duration = std::chrono::duration<double>(end_time - start_time).count();
     
-    return {total_sum, duration};
+    return {total_max, duration};
 }
 
 int main(int argc, char* argv[]) {
@@ -71,12 +71,7 @@ int main(int argc, char* argv[]) {
     // Test cases
     std::vector<std::vector<int>> test_cases;
     
-    // Case 1: Sequential numbers
-    std::vector<int> seq_numbers(size);
-    std::iota(seq_numbers.begin(), seq_numbers.end(), 0);
-    test_cases.push_back(seq_numbers);
-    
-    // Case 2: Random numbers
+    // Case 1: Random numbers
     std::vector<int> random_numbers(size);
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -86,7 +81,7 @@ int main(int argc, char* argv[]) {
     }
     test_cases.push_back(random_numbers);
     
-    // Case 3: Uniform numbers
+    // Case 2: Uniform numbers
     std::vector<int> uniform_numbers(size, 1);
     test_cases.push_back(uniform_numbers);
     
@@ -94,22 +89,21 @@ int main(int argc, char* argv[]) {
         std::cout << "\nTest Case " << i + 1 << ":\n";
         std::cout << "List size: " << test_cases[i].size() << "\n";
         
-        // Regular sum
+        // Regular max
         auto start = std::chrono::high_resolution_clock::now();
-        long long regular_sum = std::accumulate(test_cases[i].begin(), 
-                                              test_cases[i].end(), 0LL);
+        int regular_max = *std::max_element(test_cases[i].begin(), test_cases[i].end());
         auto end = std::chrono::high_resolution_clock::now();
         double regular_time = std::chrono::duration<double>(end - start).count();
         
-        std::cout << "Regular sum: " << regular_sum << "\n";
+        std::cout << "Regular max: " << regular_max << "\n";
         std::cout << "Regular time: " << regular_time << " seconds\n";
         
-        // Parallel sum
-        auto [parallel_result, parallel_time] = parallel_sum(test_cases[i], num_threads);
-        std::cout << "Parallel sum: " << parallel_result << "\n";
+        // Parallel max
+        auto [parallel_result, parallel_time] = parallel_max(test_cases[i], num_threads);
+        std::cout << "Parallel max: " << parallel_result << "\n";
         std::cout << "Parallel time: " << parallel_time << " seconds\n";
-        std::cout << "Speed improvement: " << (regular_time/parallel_time) << "x\n";
+        std::cout << "Speed improvement: " << (regular_time / parallel_time) << "x\n";
     }
     
     return 0;
-}
+} 

@@ -6,15 +6,15 @@ import Data.Time.Clock
 import System.Environment
 import System.Exit
 
--- Worker function to calculate partial sum
-sumWorker :: [Int] -> MVar Int -> IO ()
-sumWorker numbers result = do
-    let partialSum = sum numbers
-    putMVar result partialSum
+-- Worker function to calculate partial max
+maxWorker :: [Int] -> MVar Int -> IO ()
+maxWorker numbers result = do
+    let partialMax = maximum numbers
+    putMVar result partialMax
 
--- Parallel sum implementation
-parallelSum :: [Int] -> Int -> IO (Int, Double)
-parallelSum numbers numWorkers = do
+-- Parallel max implementation
+parallelMax :: [Int] -> Int -> IO (Int, Double)
+parallelMax numbers numWorkers = do
     startTime <- getCurrentTime
     
     -- Create MVars for results
@@ -26,16 +26,16 @@ parallelSum numbers numWorkers = do
     
     -- Start workers
     forM_ (zip chunks results) $ \(chunk, result) ->
-        forkIO $ sumWorker chunk result
+        forkIO $ maxWorker chunk result
     
     -- Collect results
-    partialSums <- mapM takeMVar results
-    let totalSum = sum partialSums
+    partialMaxes <- mapM takeMVar results
+    let totalMax = maximum partialMaxes
     
     endTime <- getCurrentTime
     let duration = realToFrac $ diffUTCTime endTime startTime
     
-    return (totalSum, duration)
+    return (totalMax, duration)
 
 -- Helper function to split list into chunks
 splitIntoChunks :: Int -> [a] -> [[a]]
@@ -50,9 +50,9 @@ main = do
             let size' = read size :: Int
                 threads' = read threads :: Int
             numbers <- return $ [1..size']
-            (sum', time) <- parallelSum numbers threads'
-            putStrLn $ "Parallel sum: " ++ show sum'
+            (max', time) <- parallelMax numbers threads'
+            putStrLn $ "Parallel max: " ++ show max'
             putStrLn $ "Time: " ++ show time
         _ -> do
-            putStrLn "Usage: sum_thread <size> <threads>"
+            putStrLn "Usage: max_thread <size> <threads>"
             exitFailure

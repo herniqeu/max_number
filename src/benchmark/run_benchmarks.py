@@ -106,7 +106,7 @@ class BenchmarkRunner:
             (self.compile_cpp(), "cpp"),
             (self.compile_go(), "go"),
             (self.compile_haskell(), "haskell"),
-            (self.root_dir / "python" / "sum_thread.py", "python")
+            (self.root_dir / "python" / "max_thread.py", "python")
         ]
         
         for executable, lang in test_configs:
@@ -163,8 +163,8 @@ class BenchmarkRunner:
 
     def compile_cpp(self):
         """Compile C++ program"""
-        cpp_path = self.root_dir / "cpp" / "sum_thread.cpp"
-        output_path = cpp_path.parent / "sum_thread"
+        cpp_path = self.root_dir / "cpp" / "max_thread.cpp"
+        output_path = cpp_path.parent / "max_thread"
         
         # Garantir que o diretório existe
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -176,8 +176,8 @@ class BenchmarkRunner:
     def compile_go(self):
         """Compile Go program"""
         try:
-            go_path = self.root_dir / "go" / "sum_thread.go"
-            output_path = go_path.parent / "sum_thread"
+            go_path = self.root_dir / "go" / "max_thread.go"
+            output_path = go_path.parent / "max_thread"
             
             # Garantir que o diretório existe
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -193,8 +193,8 @@ class BenchmarkRunner:
     def compile_haskell(self):
         """Compile Haskell program"""
         try:
-            hs_path = (self.root_dir / "haskell" / "sum_thread.hs").resolve()
-            output_path = (hs_path.parent / "sum_thread").resolve()
+            hs_path = (self.root_dir / "haskell" / "max_thread.hs").resolve()
+            output_path = (hs_path.parent / "max_thread").resolve()
             
             if not hs_path.exists():
                 print(f"Error: Haskell source file not found at {hs_path}")
@@ -254,10 +254,10 @@ class BenchmarkRunner:
     def check_files(self):
         """Check if all required files exist"""
         required_files = [
-            self.root_dir / "cpp" / "sum_thread.cpp",
-            self.root_dir / "go" / "sum_thread.go",
-            self.root_dir / "haskell" / "sum_thread.hs",
-            self.root_dir / "python" / "sum_thread.py"
+            self.root_dir / "cpp" / "max_thread.cpp",
+            self.root_dir / "go" / "max_thread.go",
+            self.root_dir / "haskell" / "max_thread.hs",
+            self.root_dir / "python" / "max_thread.py"
         ]
         
         print("\nChecking required files:")

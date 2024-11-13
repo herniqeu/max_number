@@ -9,17 +9,19 @@ import (
 	"time"
 )
 
-// SumWorker calculates partial sum for a slice of numbers
-func SumWorker(numbers []int, result chan<- int) {
-	sum := 0
+// MaxWorker calculates partial max for a slice of numbers
+func MaxWorker(numbers []int, result chan<- int) {
+	max := numbers[0]
 	for _, num := range numbers {
-		sum += num
+		if num > max {
+			max = num
+		}
 	}
-	result <- sum
+	result <- max
 }
 
-// ParallelSum calculates sum using multiple goroutines
-func ParallelSum(numbers []int, numWorkers int) (int, time.Duration) {
+// ParallelMax calculates max using multiple goroutines
+func ParallelMax(numbers []int, numWorkers int) (int, time.Duration) {
 	start := time.Now()
 
 	chunkSize := len(numbers) / numWorkers
@@ -37,7 +39,7 @@ func ParallelSum(numbers []int, numWorkers int) (int, time.Duration) {
 
 		go func(start, end int) {
 			defer wg.Done()
-			SumWorker(numbers[start:end], results)
+			MaxWorker(numbers[start:end], results)
 		}(startIdx, endIdx)
 	}
 
@@ -47,13 +49,15 @@ func ParallelSum(numbers []int, numWorkers int) (int, time.Duration) {
 		close(results)
 	}()
 
-	// Calculate total sum
-	totalSum := 0
-	for partialSum := range results {
-		totalSum += partialSum
+	// Calculate total max
+	totalMax := numbers[0]
+	for partialMax := range results {
+		if partialMax > totalMax {
+			totalMax = partialMax
+		}
 	}
 
-	return totalSum, time.Since(start)
+	return totalMax, time.Since(start)
 }
 
 func main() {
@@ -67,22 +71,17 @@ func main() {
 
 	// Test cases
 	testCases := [][]int{
-		make([]int, size), // Sequential numbers
 		make([]int, size), // Random numbers
 		make([]int, size), // Uniform numbers
 	}
 
 	// Initialize test cases
 	for i := range testCases[0] {
-		testCases[0][i] = i
+		testCases[0][i] = rand.Intn(100) + 1
 	}
 
 	for i := range testCases[1] {
-		testCases[1][i] = rand.Intn(100) + 1
-	}
-
-	for i := range testCases[2] {
-		testCases[2][i] = 1
+		testCases[1][i] = 1
 	}
 
 	// Run tests
@@ -90,21 +89,22 @@ func main() {
 		fmt.Printf("\nTest Case %d:\n", i+1)
 		fmt.Printf("List size: %d\n", len(numbers))
 
-		// Regular sum
+		// Regular max
 		start := time.Now()
-		regularSum := 0
+		regularMax := numbers[0]
 		for _, num := range numbers {
-			regularSum += num
+			if num > regularMax {
+				regularMax = num
+			}
 		}
 		regularTime := time.Since(start)
 
-		fmt.Printf("Regular sum: %d\n", regularSum)
+		fmt.Printf("Regular max: %d\n", regularMax)
 		fmt.Printf("Regular time: %v\n", regularTime)
 
-		// Parallel sum
-		parallelSum, parallelTime := ParallelSum(numbers, numThreads)
-		fmt.Printf("Parallel sum: %d\n", parallelSum)
+		// Parallel max
+		parallelMax, parallelTime := ParallelMax(numbers, numThreads)
+		fmt.Printf("Parallel max: %d\n", parallelMax)
 		fmt.Printf("Parallel time: %v\n", parallelTime)
-		fmt.Printf("Speed improvement: %.2fx\n", float64(regularTime)/float64(parallelTime))
 	}
 }
