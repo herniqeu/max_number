@@ -1,7 +1,4 @@
-````markdown
 # Multi-Language Parallel Maximum Search Benchmark Suite
-
-![](./img/benchmark.png)
 
 ## Technical Overview
 
@@ -116,3 +113,19 @@ def run_single_test(self, executable, size, num_threads, lang):
 - Go: Native build with race detector
 - Haskell: `-O2 -threaded` RTS options
 - Python: JIT compilation through CPython
+
+## Conclusions
+
+1. **Performance Hierarchy**
+- C++ provides best raw performance
+- Go offers good balance of performance and safety
+- Haskell shows competitive small-scale performance
+- Python suitable for prototype development
+
+2. **Scaling Characteristics**
+- Linear scaling up to physical core count
+- Memory bandwidth becomes bottleneck at scale
+
+3. **Statistical Significance**
+- ANOVA confirms significant differences
+- Tukey HSD shows clear language performance tiers
